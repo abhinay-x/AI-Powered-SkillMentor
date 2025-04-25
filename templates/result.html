@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}SkillMentor - Business Advice Results{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card shadow mb-4 animate__animated animate__fadeIn">
+            <div class="card-header text-white d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">Business Advice</h4>
+                <a href="/" class="btn btn-light btn-sm">New Query</a>
+            </div>
+            <div class="card-body">
+                <div class="mb-4 animate__animated animate__fadeInUp animate__delay-1s">
+                    <div class="d-flex align-items-center mb-2">
+                        <svg class="mr-2" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M21.25 12C21.25 17.1086 17.1086 21.25 12 21.25C6.89137 21.25 2.75 17.1086 2.75 12C2.75 6.89137 6.89137 2.75 12 2.75C17.1086 2.75 21.25 6.89137 21.25 12Z" stroke="#3a86ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M11 8V12L14 15" stroke="#3a86ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <h5 class="mb-0">Your Question:</h5>
+                    </div>
+                    <div class="query-container p-3 rounded">
+                        <p class="lead mb-0">{{ query }}</p>
+                    </div>
+                </div>
+                
+                <div class="mb-4 animate__animated animate__fadeInUp animate__delay-2s">
+                    <div class="d-flex align-items-center mb-2">
+                        <svg class="mr-2" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 16.25C14.3472 16.25 16.25 14.3472 16.25 12C16.25 9.65279 14.3472 7.75 12 7.75C9.65279 7.75 7.75 9.65279 7.75 12C7.75 14.3472 9.65279 16.25 12 16.25Z" stroke="#3a86ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M12 2.75V5.25" stroke="#3a86ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M12 18.75V21.25" stroke="#3a86ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M5.54 5.54L7.3 7.3" stroke="#3a86ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M16.7 16.7L18.46 18.46" stroke="#3a86ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M2.75 12H5.25" stroke="#3a86ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M18.75 12H21.25" stroke="#3a86ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M5.54 18.46L7.3 16.7" stroke="#3a86ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M16.7 7.3L18.46 5.54" stroke="#3a86ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <h5 class="mb-0">SkillMentor's Advice:</h5>
+                    </div>
+                    <div class="advice-container p-3 rounded">
+                        <p>{{ advice }}</p>
+                    </div>
+                </div>
+                
+                <div class="text-muted small animate__animated animate__fadeIn animate__delay-3s">
+                    <div class="d-flex align-items-center">
+                        <svg class="mr-2" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 21.25C17.1086 21.25 21.25 17.1086 21.25 12C21.25 6.89137 17.1086 2.75 12 2.75C6.89137 2.75 2.75 6.89137 2.75 12C2.75 17.1086 6.89137 21.25 12 21.25Z" stroke="#6c757d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M12 7.75V12H16.25" stroke="#6c757d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <p class="mb-0">Response time: {{ response_time }} seconds</p>
+                    </div>
+                </div>
+                
+                <!-- Feedback Form -->
+                <div class="mt-4 p-3 border rounded feedback-section animate__animated animate__fadeIn animate__delay-4s">
+                    <h5>Was this advice helpful?</h5>
+                    <form id="feedbackForm">
+                        <input type="hidden" name="query_id" value="{{ query_id }}">
+                        <div class="feedback-stars mb-3">
+                            {% for i in range(1, 6) %}
+                            <span class="star" data-rating="{{ i }}">&#9733;</span>
+                            {% endfor %}
+                            <input type="hidden" name="rating" id="ratingInput" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="comments">Additional feedback (optional):</label>
+                            <textarea class="form-control" id="comments" name="comments" rows="2"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Submit Feedback</button>
+                    </form>
+                    <div id="feedbackResponse" class="mt-2" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Dashboard -->
+        <div class="card shadow animate__animated animate__fadeIn animate__delay-5s">
+            <div class="card-header text-white">
+                <h4 class="mb-0">Business Analytics Dashboard</h4>
+            </div>
+            <div class="card-body text-center dashboard-container">
+                <h5 class="mb-3">Performance Metrics</h5>
+                <img src="data:image/png;base64,{{ dashboard_image }}" class="img-fluid rounded" alt="Dashboard">
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Star rating functionality with enhanced animations
+        $('.star').hover(
+            function() {
+                var rating = $(this).data('rating');
+                highlightStars(rating);
+            },
+            function() {
+                var currentRating = $('#ratingInput').val();
+                highlightStars(currentRating);
+            }
+        );
+        
+        $('.star').click(function() {
+            var rating = $(this).data('rating');
+            $('#ratingInput').val(rating);
+            highlightStars(rating);
+            
+            // Add animation when star is selected
+            $(this).addClass('animate__animated animate__pulse');
+            setTimeout(() => {
+                $(this).removeClass('animate__animated animate__pulse');
+            }, 500);
+        });
+        
+        function highlightStars(rating) {
+            $('.star').removeClass('active');
+            $('.star').each(function() {
+                if ($(this).data('rating') <= rating) {
+                    $(this).addClass('active');
+                }
+            });
+        }
+        
+        // Feedback form submission with enhanced animations
+        $('#feedbackForm').submit(function(e) {
+            e.preventDefault();
+            
+            var rating = $('#ratingInput').val();
+            if (rating === "0") {
+                alert("Please select a rating");
+                return;
+            }
+            
+            // Show loading state
+            const submitBtn = $(this).find('button[type="submit"]');
+            const originalText = submitBtn.text();
+            submitBtn.html('<span class="loading-spinner mr-2"></span>Submitting...');
+            submitBtn.prop('disabled', true);
+            
+            $.ajax({
+                type: "POST",
+                url: "/feedback",
+                data: $(this).serialize(),
+                success: function(response) {
+                    if (response.success) {
+                        $('#feedbackResponse').html('<div class="alert alert-success animate__animated animate__fadeIn">Thank you for your feedback!</div>').show();
+                        $('#feedbackForm').addClass('animate__animated animate__fadeOut');
+                        setTimeout(() => {
+                            $('#feedbackForm').hide();
+                        }, 500);
+                    } else {
+                        $('#feedbackResponse').html('<div class="alert alert-danger animate__animated animate__fadeIn">Error: ' + response.error + '</div>').show();
+                        submitBtn.html(originalText);
+                        submitBtn.prop('disabled', false);
+                    }
+                },
+                error: function() {
+                    $('#feedbackResponse').html('<div class="alert alert-danger animate__animated animate__fadeIn">Server error. Please try again.</div>').show();
+                    submitBtn.html(originalText);
+                    submitBtn.prop('disabled', false);
+                }
+            });
+        });
+    });
+</script>
+<style>
+    .query-container {
+        background-color: rgba(58, 134, 255, 0.05);
+        border-left: 4px solid var(--primary-color);
+    }
+    
+    .advice-container {
+        background-color: rgba(6, 214, 160, 0.05);
+        border-left: 4px solid var(--success-color);
+    }
+    
+    .feedback-section {
+        background-color: #fff;
+        border-color: rgba(0,0,0,0.1) !important;
+        transition: all var(--transition-speed) ease;
+    }
+    
+    .feedback-section:hover {
+        box-shadow: var(--box-shadow);
+    }
+</style>
+{% endblock %} 

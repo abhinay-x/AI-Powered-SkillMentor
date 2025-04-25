@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SkillMentor - Business Metrics</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 0; color: #333; }
+        .container { width: 90%; margin: 0 auto; padding: 20px; }
+        header { background: #4b6cb7; color: white; padding: 1rem; }
+        .dashboard { margin-top: 20px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; margin-top: 20px; }
+        .stat-card { background: #f4f4f4; padding: 15px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .stat-value { font-size: 24px; font-weight: bold; color: #4b6cb7; }
+        .recent-queries { margin-top: 20px; }
+        .query-item { border-bottom: 1px solid #ddd; padding: 10px 0; }
+        button { padding: 10px 15px; background: #4b6cb7; color: white; border: none; cursor: pointer; }
+        button:hover { background: #3a5795; }
+        footer { text-align: center; margin-top: 20px; padding: 10px; background: #f4f4f4; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>SkillMentor Metrics Dashboard</h1>
+            <p>Business performance and usage analytics</p>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="dashboard">
+            <h2>Business Performance Dashboard</h2>
+            <img src="data:image/png;base64,{{ dashboard_img }}" alt="Dashboard" style="width: 100%; max-width: 1000px;">
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Queries</h3>
+                <div class="stat-value">{{ total_queries }}</div>
+            </div>
+            
+            <div class="stat-card">
+                <h3>Avg. Documents Retrieved</h3>
+                <div class="stat-value">{{ avg_docs_retrieved }}</div>
+            </div>
+            
+            {% for period, count in usage_data.items() %}
+            <div class="stat-card">
+                <h3>Usage {{ period }}</h3>
+                <div class="stat-value">{{ count }}</div>
+            </div>
+            {% endfor %}
+            
+            {% for category, count in category_counts.items() %}
+            <div class="stat-card">
+                <h3>{{ category|capitalize }} Queries</h3>
+                <div class="stat-value">{{ count }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="recent-queries">
+            <h2>Recent Queries</h2>
+            {% for query in recent_queries %}
+            <div class="query-item">
+                <p><strong>Query:</strong> {{ query.query if query.query is defined else "Unknown" }}</p>
+                <p><strong>Category:</strong> {{ query.category if query.category is defined else "Unknown" }} | 
+                   <strong>Time:</strong> {{ query.processing_time|round(2) if query.processing_time is defined else "0.00" }}s</p>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <a href="/"><button>Back to Home</button></a>
+        </div>
+    </div>
+    
+    <footer>
+        <p>&copy; 2023 SkillMentor - Empowering micro-entrepreneurs</p>
+    </footer>
+</body>
+</html> 

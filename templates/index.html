@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}SkillMentor - AI Business Mentoring for Micro-Entrepreneurs{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <div class="card shadow slide-up">
+            <div class="card-header text-white">
+                <h4 class="mb-0">Ask SkillMentor</h4>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <div class="icon-container pulse mb-3">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 4.75V6.25" stroke="var(--primary-color)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M17.1266 6.87347L16.0659 7.93413" stroke="var(--primary-color)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M19.25 12H17.75" stroke="var(--primary-color)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M17.1266 17.1265L16.0659 16.0659" stroke="var(--primary-color)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M12 19.25V17.75" stroke="var(--primary-color)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M7.9342 16.0659L6.87354 17.1265" stroke="var(--primary-color)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M6.25 12H4.75" stroke="var(--primary-color)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M7.9342 7.93413L6.87354 6.87347" stroke="var(--primary-color)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <p class="lead">
+                        AI-powered business advice for micro-entrepreneurs
+                    </p>
+                </div>
+                
+                {% if error %}
+                <div class="alert alert-danger animate__animated animate__headShake" role="alert">
+                    {{ error }}
+                </div>
+                {% endif %}
+                
+                <form action="/query" method="post" class="query-form">
+                    <div class="form-group">
+                        <label for="query">What business advice do you need today?</label>
+                        <textarea class="form-control" id="query" name="query" rows="3" placeholder="E.g., How should I price my handmade furniture?" required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="language">Select your language:</label>
+                        <select class="form-control" id="language" name="language">
+                            <option value="en" selected>English</option>
+                            <option value="hi">Hindi</option>
+                        </select>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary btn-lg submit-btn">
+                            <span class="btn-text">Get Advice</span>
+                            <span class="btn-loading d-none">
+                                <span class="loading-spinner mr-2"></span>Processing...
+                            </span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-muted text-center">
+                <small>Powered by AI to empower sustainable micro-entrepreneurship</small>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <h5 class="example-header">Example Questions:</h5>
+            <ul class="list-group">
+                <li class="list-group-item list-group-item-action example-query" style="--animation-order: 1">How should I price my handmade wooden crafts?</li>
+                <li class="list-group-item list-group-item-action example-query" style="--animation-order: 2">What's the best way to market my products without spending money?</li>
+                <li class="list-group-item list-group-item-action example-query" style="--animation-order: 3">How can I make my farming business more sustainable?</li>
+                <li class="list-group-item list-group-item-action example-query" style="--animation-order: 4">What are some low-cost ways to improve product quality?</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Set example query when clicked
+        $('.example-query').click(function() {
+            const query = $(this).text();
+            $('#query').val(query);
+            $('#query').focus();
+            
+            // Scroll to form
+            $('html, body').animate({
+                scrollTop: $('.query-form').offset().top - 100
+            }, 300);
+        });
+        
+        // Show loading state when form submits
+        $('.query-form').submit(function() {
+            $('.btn-text').addClass('d-none');
+            $('.btn-loading').removeClass('d-none');
+            $('.submit-btn').prop('disabled', true);
+            
+            // Add progress animation
+            return true;
+        });
+        
+        // Animate example queries one by one
+        setTimeout(function() {
+            $('.example-query').each(function(index) {
+                $(this).css('opacity', '1');
+            });
+        }, 500);
+    });
+</script>
+
+<style>
+    .example-header {
+        margin-bottom: 1rem;
+        font-weight: 600;
+        color: var(--dark-color);
+    }
+    
+    .slide-up {
+        animation: slideUp 0.6s ease-out forwards;
+    }
+    
+    @keyframes slideUp {
+        from { transform: translateY(30px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .icon-container {
+        display: inline-block;
+        padding: 16px;
+        border-radius: 50%;
+        background-color: rgba(58, 134, 255, 0.1);
+    }
+</style>
+{% endblock %} 
