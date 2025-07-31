@@ -42,6 +42,11 @@
                 <div class="stat-value">{{ avg_docs_retrieved }}</div>
             </div>
             
+            <div class="stat-card">
+                <h3>Avg. User Rating</h3>
+                <div class="stat-value">{{ avg_user_rating }}/5</div>
+            </div>
+            
             {% for period, count in usage_data.items() %}
             <div class="stat-card">
                 <h3>Usage {{ period }}</h3>

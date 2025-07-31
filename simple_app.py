@@ -7,7 +7,7 @@ import random
 import io
 import base64
 import matplotlib.pyplot as plt
-from flask import Flask, request, render_template, jsonify, session
+from flask import Flask, request, render_template, jsonify, session, flash, redirect, url_for
 from datetime import datetime
 import re
 import hashlib
@@ -444,80 +444,119 @@ def generate_advice(query):
     return request_data
 
 def generate_dashboard():
-    """Generate dashboard visualization using matplotlib."""
+    """Generate dashboard visualization using actual collected data."""
     plt.figure(figsize=(12, 10))
     
-    # Generate synthetic data
-    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
-    profits = [random.uniform(1000, 5000) for _ in range(6)]
-    costs = [random.uniform(2000, 4000) for _ in range(6)]
-    revenues = [cost + random.uniform(500, 2000) for cost in costs]
+    # Actual data collection
+    current_time = time.time()
     
-    # Get data from advice requests
-    categories = [req.get('category', 'Unknown') for req in storage['advice_requests']]
-    category_counts = {'pricing': 0, 'marketing': 0, 'sustainability': 0, 'production': 0, 'general': 0}
-    for cat in categories:
-        if cat.lower() in category_counts:
-            category_counts[cat.lower()] += 1
+    # Analyze advice requests over time
+    time_periods = [
+        ('Last 24h', 86400),
+        ('Last week', 604800),
+        ('Last month', 2592000)
+    ]
     
-    # Ensure we have some data for plotting
-    if all(count == 0 for count in category_counts.values()):
-        for cat in category_counts:
-            category_counts[cat] = random.randint(1, 5)
+    # Categorize and analyze queries
+    category_counts = {
+        'pricing': 0,
+        'marketing': 0,
+        'sustainability': 0,
+        'production': 0,
+        'general': 0
+    }
+    
+    # Time-based query analysis
+    period_query_counts = {period: 0 for period, _ in time_periods}
+    
+    # Feedback analysis
+    feedback_ratings = []
+    
+    # Process stored advice requests
+    for req in storage['advice_requests']:
+        try:
+            req_time = req.get('timestamp', 0)
             
-    response_times = [req.get('processing_time', 1.0) for req in storage['advice_requests']]
+            # Categorize by time periods
+            for period, duration in time_periods:
+                if current_time - req_time <= duration:
+                    period_query_counts[period] += 1
+            
+            # Categorize by query type
+            category = req.get('category', 'general').lower()
+            if category in category_counts:
+                category_counts[category] += 1
+        except Exception as e:
+            logging.error(f"Error processing advice request: {e}")
     
-    # Plot 1: Profit trend
+    # Process user feedback
+    for feedback in storage['user_feedback']:
+        try:
+            rating = feedback.get('rating', 0)
+            if isinstance(rating, (int, float)) and 1 <= rating <= 5:
+                feedback_ratings.append(rating)
+        except Exception as e:
+            logging.error(f"Error processing feedback: {e}")
+    
+    # Ensure we have a plot even with minimal data
     plt.subplot(2, 2, 1)
-    plt.plot(months, profits, marker='o', color='green')
-    plt.title('Profit Trend (Last 6 Months)')
-    plt.xlabel('Month')
-    plt.ylabel('Profit ($)')
-    plt.grid(True, linestyle='--', alpha=0.7)
-    
-    # Plot 2: Cost vs Revenue
-    plt.subplot(2, 2, 2)
-    x = range(len(months))
-    plt.bar([i - 0.2 for i in x], costs, width=0.4, label='Costs', color='red', alpha=0.7)
-    plt.bar([i + 0.2 for i in x], revenues, width=0.4, label='Revenue', color='blue', alpha=0.7)
-    plt.title('Cost vs Revenue')
-    plt.xlabel('Month')
-    plt.ylabel('Amount ($)')
-    plt.xticks(x, months)
-    plt.legend()
-    plt.grid(True, linestyle='--', alpha=0.7, axis='y')
-    
-    # Plot 3: Query Types
-    plt.subplot(2, 2, 3)
     cats = list(category_counts.keys())
     counts = list(category_counts.values())
-    if sum(counts) > 0:  # Check if there's data to plot
-        plt.pie(counts, labels=cats, autopct='%1.1f%%', startangle=90, colors=['#ff9999','#66b3ff','#99ff99','#ffcc99','#c2c2f0'])
-    else:
-        plt.text(0.5, 0.5, 'No data available', horizontalalignment='center', verticalalignment='center')
-    plt.title('Query Categories')
     
-    # Plot 4: Response Time
+    # Prevent empty pie chart
+    if sum(counts) == 0:
+        cats = ['No Data']
+        counts = [1]
+    
+    plt.pie(counts, labels=cats, autopct='%1.1f%%', startangle=90, 
+            colors=['#ff9999','#66b3ff','#99ff99','#ffcc99','#c2c2f0'])
+    plt.title('Query Categories Distribution')
+    
+    # Plot 2: Queries Over Time
+    plt.subplot(2, 2, 2)
+    periods = list(period_query_counts.keys())
+    query_counts = list(period_query_counts.values())
+    plt.bar(periods, query_counts, color='#4b6cb7')
+    plt.title('Query Volume')
+    plt.ylabel('Number of Queries')
+    
+    # Plot 3: Feedback Ratings Distribution
+    plt.subplot(2, 2, 3)
+    if feedback_ratings:
+        plt.hist(feedback_ratings, bins=5, range=(0.5, 5.5), color='green', alpha=0.7)
+        plt.title('User Feedback Ratings')
+        plt.xlabel('Rating')
+        plt.ylabel('Frequency')
+    else:
+        plt.text(0.5, 0.5, 'No feedback yet', 
+                 horizontalalignment='center', verticalalignment='center')
+    
+    # Plot 4: Processing Time Analysis
     plt.subplot(2, 2, 4)
-    # Ensuring there's at least some data
-    if not response_times:
-        response_times = [1.0, 1.5, 0.8, 1.2, 0.9]
-    plt.hist(response_times, bins=10, color='purple', alpha=0.7)
-    plt.title('Response Time Distribution')
-    plt.xlabel('Time (seconds)')
-    plt.ylabel('Frequency')
-    plt.grid(True, linestyle='--', alpha=0.7, axis='y')
+    processing_times = [req.get('processing_time', 1.0) for req in storage['advice_requests']]
+    if processing_times:
+        plt.hist(processing_times, bins=10, color='purple', alpha=0.7)
+        plt.title('Response Time Distribution')
+        plt.xlabel('Time (seconds)')
+        plt.ylabel('Frequency')
+    else:
+        plt.text(0.5, 0.5, 'No processing times recorded', 
+                 horizontalalignment='center', verticalalignment='center')
     
     plt.tight_layout()
     
     # Convert plot to base64 string for embedding in HTML
-    buf = io.BytesIO()
-    plt.savefig(buf, format='png')
-    buf.seek(0)
-    img_str = base64.b64encode(buf.read()).decode('utf-8')
-    plt.close()
-    
-    return img_str
+    try:
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png')
+        buf.seek(0)
+        img_str = base64.b64encode(buf.read()).decode('utf-8')
+        plt.close()
+        return img_str
+    except Exception as e:
+        logging.error(f"Error generating dashboard image: {e}")
+        plt.close()
+        return None
 
 @app.route('/')
 def index():
@@ -550,56 +589,115 @@ def process_query():
 @app.route('/feedback', methods=['POST'])
 def record_feedback():
     """Record user feedback on advice."""
-    advice_id = request.form['advice_id']
-    rating = int(request.form['rating'])
-    comments = request.form.get('comments', '')
+    try:
+        # Validate input data
+        if 'advice_id' not in request.form:
+            flash('Missing advice ID')
+            return redirect(url_for('index'))
+        
+        if 'rating' not in request.form:
+            flash('Missing rating')
+            return redirect(url_for('index'))
+        
+        # Safely parse rating
+        try:
+            rating = int(request.form['rating'])
+        except ValueError:
+            flash('Invalid rating. Please provide a number between 1 and 5.')
+            return redirect(url_for('index'))
+        
+        # Validate rating range
+        if rating < 1 or rating > 5:
+            flash('Rating must be between 1 and 5.')
+            return redirect(url_for('index'))
+        
+        # Safely get advice_id and comments
+        advice_id = request.form['advice_id']
+        comments = request.form.get('comments', '').strip()
+        
+        # Validate advice_id
+        if not advice_id:
+            flash('Invalid advice ID')
+            return redirect(url_for('index'))
+        
+        # Create feedback dictionary with validation
+        feedback = {
+            'advice_id': advice_id,
+            'rating': rating,
+            'comments': comments,
+            'timestamp': time.time()
+        }
+        
+        # Safely append to storage
+        try:
+            storage['user_feedback'].append(feedback)
+        except Exception as storage_error:
+            logging.error(f"Error storing feedback: {storage_error}")
+            flash('Unable to save feedback. Please try again.')
+            return redirect(url_for('index'))
+        
+        flash('Thank you for your feedback!')
+        return redirect(url_for('index'))
     
-    feedback = {
-        'advice_id': advice_id,
-        'rating': rating,
-        'comments': comments,
-        'timestamp': time.time()
-    }
-    storage['user_feedback'].append(feedback)
-    
-    flash('Thank you for your feedback!')
-    return redirect(url_for('index'))
+    except Exception as e:
+        # Catch-all error handling
+        logging.error(f"Unexpected error in feedback submission: {e}")
+        flash('An unexpected error occurred. Please try again.')
+        return redirect(url_for('index'))
 
 @app.route('/metrics')
 def show_metrics():
-    """Display business metrics dashboard."""
-    dashboard_img = generate_dashboard()
+    """Display actual business metrics dashboard."""
+    # Ensure dashboard generation doesn't fail
+    try:
+        dashboard_img = generate_dashboard()
+    except Exception as e:
+        logging.error(f"Dashboard generation error: {e}")
+        dashboard_img = None
     
-    # Count requests by category
+    # Actual metrics calculation
+    current_time = time.time()
+    
+    # Category counts with safe counting
     category_counts = {}
     for req in storage['advice_requests']:
-        category = req['category'].capitalize()
-        if category in category_counts:
-            category_counts[category] += 1
-        else:
-            category_counts[category] = 1
+        category = req.get('category', 'Unknown').capitalize()
+        category_counts[category] = category_counts.get(category, 0) + 1
     
-    # Get recent queries - convert any datetime timestamps to float for comparison
-    def get_timestamp(x):
-        ts = x.get('timestamp', 0)
-        if isinstance(ts, datetime):
-            return ts.timestamp()
-        return ts
-    
-    recent_queries = sorted(storage['advice_requests'], key=get_timestamp, reverse=True)[:5]
-    
-    # Get usage over time (simulated)
-    current_time = time.time()
-    time_periods = ['Last 24h', 'Last week', 'Last month']
+    # Usage data with safe calculation
     usage_data = {
         'Last 24h': len([r for r in storage['advice_requests'] if current_time - r.get('timestamp', 0) < 86400]),
         'Last week': len([r for r in storage['advice_requests'] if current_time - r.get('timestamp', 0) < 604800]),
         'Last month': len(storage['advice_requests'])
     }
     
-    # Calculate average document retrieval stats
-    doc_counts = [len(retrieve_relevant_documents(req['query'])) for req in storage['advice_requests'] if 'query' in req]
+    # Feedback analysis with robust handling
+    feedback_ratings = [f['rating'] for f in storage['user_feedback'] if isinstance(f.get('rating'), (int, float)) and 1 <= f['rating'] <= 5]
+    avg_rating = sum(feedback_ratings) / len(feedback_ratings) if feedback_ratings else 0
+    
+    # Document retrieval stats with error prevention
+    doc_counts = []
+    for req in storage['advice_requests']:
+        try:
+            if 'query' in req:
+                doc_count = len(retrieve_relevant_documents(req['query']))
+                doc_counts.append(doc_count)
+        except Exception as e:
+            logging.error(f"Error retrieving documents for query: {e}")
+    
+    # Safe average calculation
     avg_docs_retrieved = sum(doc_counts) / len(doc_counts) if doc_counts else 0
+    
+    # Recent queries with error handling
+    recent_queries = []
+    try:
+        recent_queries = sorted(
+            storage['advice_requests'], 
+            key=lambda x: x.get('timestamp', 0), 
+            reverse=True
+        )[:10]  # Increased to 10 for more comprehensive view
+    except Exception as e:
+        logging.error(f"Error sorting recent queries: {e}")
     
     return render_template(
         'metrics.html',
@@ -608,7 +706,8 @@ def show_metrics():
         recent_queries=recent_queries,
         usage_data=usage_data,
         total_queries=len(storage['advice_requests']),
-        avg_docs_retrieved=f"{avg_docs_retrieved:.1f}"
+        avg_docs_retrieved=f"{avg_docs_retrieved:.1f}",
+        avg_user_rating=f"{avg_rating:.1f}"
     )
 
 @app.route('/api/advice', methods=['POST'])
@@ -649,6 +748,55 @@ def page_not_found(e):
 def server_error(e):
     """Handle 500 errors."""
     return render_template('error.html', error="Internal server error"), 500
+
+@app.errorhandler(Exception)
+def handle_global_exception(e):
+    """Global error handler to catch and log all unhandled exceptions."""
+    # Log the full traceback for debugging
+    logging.error(f"Unhandled exception: {str(e)}", exc_info=True)
+    
+    # Try to get more context about the error
+    error_type = type(e).__name__
+    error_details = str(e)
+    
+    # Attempt to provide a meaningful error message
+    if error_type == 'NameError':
+        error_message = f"Undefined variable: {error_details}"
+    elif error_type == 'AttributeError':
+        error_message = f"Undefined attribute or method: {error_details}"
+    elif error_type == 'TypeError':
+        error_message = f"Type mismatch or undefined operation: {error_details}"
+    else:
+        error_message = f"An unexpected {error_type} occurred: {error_details}"
+    
+    # Log the specific error message
+    logging.error(error_message)
+    
+    # Flash the error message for user feedback
+    flash(f"An error occurred: {error_message}")
+    
+    # Attempt to return to a safe state
+    return render_template('error.html', error=error_message), 500
+
+# Ensure all routes have comprehensive error handling
+def safe_route_wrapper(route_func):
+    """Decorator to add error handling to route functions."""
+    def wrapper(*args, **kwargs):
+        try:
+            return route_func(*args, **kwargs)
+        except Exception as e:
+            logging.error(f"Error in route {route_func.__name__}: {str(e)}", exc_info=True)
+            flash(f"An unexpected error occurred in {route_func.__name__}")
+            return redirect(url_for('index'))
+    wrapper.__name__ = route_func.__name__
+    return wrapper
+
+# Wrap existing routes with error handling
+index = safe_route_wrapper(index)
+process_query = safe_route_wrapper(process_query)
+record_feedback = safe_route_wrapper(record_feedback)
+show_metrics = safe_route_wrapper(show_metrics)
+api_get_advice = safe_route_wrapper(api_get_advice)
 
 if __name__ == '__main__':
     # Ensure templates directory exists
